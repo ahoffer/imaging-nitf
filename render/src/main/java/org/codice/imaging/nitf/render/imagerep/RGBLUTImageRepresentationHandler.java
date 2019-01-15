@@ -23,6 +23,7 @@ import org.codice.imaging.nitf.core.image.ImageCompression;
 import org.codice.imaging.nitf.core.image.ImageSegment;
 import org.codice.imaging.nitf.render.ImageMask;
 import org.codice.imaging.nitf.render.datareader.IOReaderFunction;
+import org.jaitools.tiledimage.DiskMemImage;
 
 /**
  * Image representation handler for LUT (RGB) images.
@@ -68,7 +69,10 @@ class RGBLUTImageRepresentationHandler implements ImageRepresentationHandler {
     }
 
     @Override
-    public BufferedImage createBufferedImage(final int width, final int height) {
-        return new BufferedImage(width, height, BufferedImage.TYPE_BYTE_INDEXED, colourModel);
+    public DiskMemImage createBufferedImage(final int width, final int height) {
+        return new DiskMemImage(
+                width,
+                height,
+                new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_INDEXED, colourModel).getSampleModel(), colourModel);
     }
 }

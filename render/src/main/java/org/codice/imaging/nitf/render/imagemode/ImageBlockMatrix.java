@@ -15,10 +15,10 @@
 
 package org.codice.imaging.nitf.render.imagemode;
 
-import java.awt.image.BufferedImage;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.codice.imaging.nitf.core.image.ImageSegment;
+import org.jaitools.tiledimage.DiskMemImage;
 
 /**
  * The ImageMatrix represents image data stored in a rowcount x columncount matrix.
@@ -35,7 +35,7 @@ class ImageBlockMatrix {
      * for.
      * @param imageSupplier the underlying buffered image to store the data.
      */
-    ImageBlockMatrix(final ImageSegment imageSegment, final Supplier<BufferedImage> imageSupplier) {
+    ImageBlockMatrix(final ImageSegment imageSegment, final Supplier<DiskMemImage> imageSupplier) {
         this.matrixWidth = (int) imageSegment.getNumberOfBlocksPerColumn();
         this.matrixHeight = (int) imageSegment.getNumberOfBlocksPerRow();
         int blockWidth = (int) imageSegment.getNumberOfPixelsPerBlockHorizontal();

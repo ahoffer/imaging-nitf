@@ -22,12 +22,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
-
 import org.codice.imaging.nitf.core.image.ImageBand;
 import org.codice.imaging.nitf.core.image.ImageRepresentation;
 import org.codice.imaging.nitf.core.image.ImageSegment;
@@ -35,6 +33,7 @@ import org.codice.imaging.nitf.render.imagemode.ImageModeHandler;
 import org.codice.imaging.nitf.render.imagemode.ImageModeHandlerFactory;
 import org.codice.imaging.nitf.render.imagerep.ImageRepresentationHandler;
 import org.codice.imaging.nitf.render.imagerep.ImageRepresentationHandlerFactory;
+import org.jaitools.tiledimage.DiskMemImage;
 
 /**
  * Renderer for NITF files.
@@ -111,12 +110,18 @@ public class NitfRenderer {
      * @return rendered image
      * @throws IOException if the source data could not be read from
      */
-    public final BufferedImage render(final ImageSegment imageSegment) throws IOException {
-        BufferedImage img = new BufferedImage(imageSegment.getImageLocationColumn()
-                + (int) imageSegment.getNumberOfColumns(),
-                imageSegment.getImageLocationRow()
-                        + (int) imageSegment.getNumberOfRows(),
-                BufferedImage.TYPE_INT_ARGB);
+    public final DiskMemImage render(final ImageSegment imageSegment) throws IOException {
+    int blockWidth =
+        imageSegment.getImageLocationColumn() + (int) imageSegment.getNumberOfColumns();
+    int blockHeight = imageSegment.getImageLocationRow() + (int) imageSegment.getNumberOfRows();
+
+    BufferedImage bufImg = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+
+    DiskMemImage img =
+        new DiskMemImage(
+            blockWidth,
+            blockHeight,
+                bufImg.getSampleModel(), bufImg.getColorModel());
         Graphics2D targetGraphic = img.createGraphics();
 
         render(imageSegment, targetGraphic);
@@ -130,11 +135,11 @@ public class NitfRenderer {
      * @return rendered image
      * @throws IOException if the source data could not be read from
      */
-    public final BufferedImage renderToClosestDataModel(final ImageSegment imageSegment) throws IOException {
+    public final DiskMemImage renderToClosestDataModel(final ImageSegment imageSegment) throws IOException {
         ImageRepresentationHandler handler =
                 ImageRepresentationHandlerFactory.forImageSegment(imageSegment);
 
-        BufferedImage img = handler.createBufferedImage(imageSegment.getImageLocationColumn()
+        DiskMemImage img = handler.createBufferedImage(imageSegment.getImageLocationColumn()
                         + (int) imageSegment.getNumberOfColumns(),
                 imageSegment.getImageLocationRow()
                         + (int) imageSegment.getNumberOfRows());
@@ -148,14 +153,19 @@ public class NitfRenderer {
     private void render(final BlockRenderer renderer, final ImageSegment imageSegment, final Graphics2D target) throws IOException {
         renderer.setImageSegment(imageSegment, imageSegment.getData());
 
-        processBlocks(imageSegment, (rowIndex, columnIndex) -> {
-            BufferedImage img = renderer.getImageBlock(rowIndex, columnIndex);
-            target.drawImage(img,
-                    imageSegment.getImageLocationColumn() + columnIndex
-                            * (int) imageSegment.getNumberOfPixelsPerBlockHorizontal(),
-                    imageSegment.getImageLocationRow()
-                            + rowIndex * (int) imageSegment.getNumberOfPixelsPerBlockVertical(),
-                    null);
+    processBlocks(
+        imageSegment,
+        (rowIndex, columnIndex) -> {
+          BufferedImage img = renderer.getImageBlock(rowIndex, columnIndex);
+          if (img != null) {
+            target.drawImage(
+                img,
+                imageSegment.getImageLocationColumn()
+                    + columnIndex * (int) imageSegment.getNumberOfPixelsPerBlockHorizontal(),
+                imageSegment.getImageLocationRow()
+                    + rowIndex * (int) imageSegment.getNumberOfPixelsPerBlockVertical(),
+                null);
+          }
         });
     }
 

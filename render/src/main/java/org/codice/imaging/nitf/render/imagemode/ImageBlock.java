@@ -15,9 +15,10 @@
 package org.codice.imaging.nitf.render.imagemode;
 
 import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
+import java.awt.geom.AffineTransform;
 import java.awt.image.DataBuffer;
 import java.util.function.Supplier;
+import org.jaitools.tiledimage.DiskMemImage;
 
 /**
  * An ImageBlock represents a single block of a larger image.
@@ -33,8 +34,8 @@ class ImageBlock {
     private final int blocksInOneRow;
     private final int blockWidth;
     private final int blockHeight;
-    private final Supplier<BufferedImage> supplier;
-    private BufferedImage blockImage;
+    private final Supplier<DiskMemImage> supplier;
+    private DiskMemImage blockImage;
 
     /**
      * Constructor.
@@ -49,7 +50,7 @@ class ImageBlock {
      * @param imageSupplier the underlying image source.
      */
     ImageBlock(final int row, final int column, final int numColumns, final int width, final int height,
-            final Supplier<BufferedImage> imageSupplier) {
+            final Supplier<DiskMemImage> imageSupplier) {
         this.blockRowIndex = row;
         this.blockColumnIndex = column;
         this.blocksInOneRow = numColumns;
@@ -68,7 +69,7 @@ class ImageBlock {
             blockImage = supplier.get();
         }
 
-        return blockImage.getRaster().getDataBuffer();
+        return blockImage.getData().getDataBuffer();
     }
 
     /**
@@ -79,7 +80,11 @@ class ImageBlock {
      * after the rendering is complete.
      */
     public void render(final Graphics2D targetImage, final boolean disposeAfterRender) {
-        targetImage.drawImage(blockImage, this.blockColumnIndex * this.blockHeight, this.blockRowIndex * this.blockWidth, null);
+        if (blockImage == null) {
+            blockImage = supplier.get();
+        }
+
+        targetImage.drawRenderedImage(blockImage, new AffineTransform());
 
         if (disposeAfterRender) {
             this.blockImage = null;

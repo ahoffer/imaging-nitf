@@ -18,10 +18,9 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.io.IOException;
 import java.util.Map;
-
 import javax.imageio.stream.ImageInputStream;
-
 import org.codice.imaging.nitf.render.ImageMask;
+import org.jaitools.tiledimage.DiskMemImage;
 
 abstract class AbstractRgbImageRepresentationHandler implements ImageRepresentationHandler {
     protected final Map<Integer, Integer> bandMapping;
@@ -41,8 +40,10 @@ abstract class AbstractRgbImageRepresentationHandler implements ImageRepresentat
             final ImageInputStream imageInputStream, final int bandIndex) throws IOException;
 
     @Override
-    public final BufferedImage createBufferedImage(final int blockWidth, final int blockHeight) {
-        return new BufferedImage(blockWidth, blockHeight, BufferedImage.TYPE_INT_ARGB);
+    public final DiskMemImage createBufferedImage(final int blockWidth, final int blockHeight) {
+        BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        return new DiskMemImage(blockWidth, blockHeight, img.getSampleModel(), img.getColorModel());
+//        return new BufferedImage(blockWidth, blockHeight, BufferedImage.TYPE_INT_ARGB).getSampleModel();
     }
 
     @Override

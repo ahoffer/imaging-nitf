@@ -14,11 +14,11 @@
  */
 package org.codice.imaging.nitf.render.imagerep;
 
-import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.io.IOException;
 import javax.imageio.stream.ImageInputStream;
 import org.codice.imaging.nitf.render.ImageMask;
+import org.jaitools.tiledimage.DiskMemImage;
 
 /**
  * An ImageRepresentationHandler calculates the values for a given pixel based on the current pixel value
@@ -51,7 +51,7 @@ public interface ImageRepresentationHandler {
      * @return a new BufferedImage for this ImageRepresentation.  This method should never return
      * the same object that was returned in a previous call.
      */
-    BufferedImage createBufferedImage(int width, int height);
+    DiskMemImage createBufferedImage(int width, int height);
 
     /**
      * Apply image mask to one pixel within a block.

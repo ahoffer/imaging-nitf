@@ -19,6 +19,7 @@ import java.awt.image.DataBuffer;
 import java.io.IOException;
 import javax.imageio.stream.ImageInputStream;
 import org.codice.imaging.nitf.render.datareader.IOReaderFunction;
+import org.jaitools.tiledimage.DiskMemImage;
 
 /**
  * Image representation handler for 12 and 16 bit mono (greyscale) images.
@@ -40,7 +41,11 @@ class Mono16IntegerImageRepresentationHandler extends SharedMonoImageRepresentat
     }
 
     @Override
-    public BufferedImage createBufferedImage(final int width, final int height) {
-        return new BufferedImage(width, height, BufferedImage.TYPE_USHORT_GRAY);
+    public DiskMemImage createBufferedImage(final int width, final int height) {
+        BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_USHORT_GRAY);
+        return new DiskMemImage(
+                width,
+                height,
+                img.getSampleModel(), img.getColorModel());
     }
 }

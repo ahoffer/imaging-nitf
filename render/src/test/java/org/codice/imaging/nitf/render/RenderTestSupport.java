@@ -15,24 +15,25 @@
 package org.codice.imaging.nitf.render;
 
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.function.Function;
 import javax.imageio.ImageIO;
+import junit.framework.TestCase;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.codice.imaging.compare.Compare;
-import org.codice.imaging.nitf.core.impl.SlottedParseStrategy;
 import org.codice.imaging.nitf.core.common.NitfFormatException;
-import org.codice.imaging.nitf.core.common.impl.NitfInputStreamReader;
 import org.codice.imaging.nitf.core.common.NitfReader;
+import org.codice.imaging.nitf.core.common.impl.NitfInputStreamReader;
 import org.codice.imaging.nitf.core.header.impl.NitfParser;
 import org.codice.imaging.nitf.core.image.ImageSegment;
+import org.codice.imaging.nitf.core.impl.SlottedParseStrategy;
+import org.jaitools.tiledimage.DiskMemImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import junit.framework.TestCase;
 
 /**
  * Shared code for rendering tests
@@ -69,7 +70,7 @@ public class RenderTestSupport extends TestCase {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, Pair::getRight,
+        }, imageSegmentDiskMemImagePair -> imageSegmentDiskMemImagePair.getRight().getAsBufferedImage(),
                 (actualImage, expectedImage, imageSegment) -> Compare.areIdentical(actualImage, expectedImage));
     }
 
@@ -97,8 +98,8 @@ public class RenderTestSupport extends TestCase {
     }
 
     protected void testFile(final String testfile,
-            final String parentDirectory, Function<Pair<NitfRenderer, ImageSegment>, BufferedImage> supplier,
-            Function<Pair<ImageSegment, BufferedImage>, BufferedImage> function,
+            final String parentDirectory, Function<Pair<NitfRenderer, ImageSegment>, DiskMemImage> supplier,
+            Function<Pair<ImageSegment, DiskMemImage>, BufferedImage> function,
             CompareImage compareImage) throws IOException, NitfFormatException {
         String inputFileName = "/" + parentDirectory + "/" + testfile;
         System.out.println("================================== Testing :" + inputFileName);
@@ -110,29 +111,29 @@ public class RenderTestSupport extends TestCase {
             ImageSegment imageSegment = parseStrategy.getDataSource().getImageSegments().get(i);
             NitfRenderer renderer = new NitfRenderer();
 
-            BufferedImage img = supplier.apply(new ImmutablePair<>(renderer, imageSegment));
+            DiskMemImage img = supplier.apply(new ImmutablePair<>(renderer, imageSegment));
 
-            img = function.apply(new ImmutablePair<>(imageSegment, img));
+            BufferedImage bufImg = function.apply(new ImmutablePair<>(imageSegment, img));
 
             // TODO: move to automated (perceptual?) comparison
             File targetPath = new File("target" + File.separator + testfile + "_" + i + ".png");
-            ImageIO.write(img, "png", targetPath);
+            ImageIO.write(bufImg, "png", targetPath);
             String referencePath = "/" + parentDirectory + "/" + testfile + "_" + i + ".ref.png";
             if (getClass().getResource(referencePath) != null) {
                 BufferedImage refImage = ImageIO.read(getClass().getResourceAsStream(referencePath));
-                assertTrue(compareImage.compare(img, refImage, imageSegment));
+                assertTrue(compareImage.compare(bufImg, refImage, imageSegment));
                 targetPath.delete();
             }
         }
     }
 
-    private BufferedImage convert2ARGB(ImageSegment imageSegment, BufferedImage bufferedImage) {
+    private BufferedImage convert2ARGB(ImageSegment imageSegment, DiskMemImage bufferedImage) {
         BufferedImage imgAGRB = new BufferedImage(
                 imageSegment.getImageLocationColumn() + (int) imageSegment.getNumberOfColumns(),
                 imageSegment.getImageLocationRow() + (int) imageSegment.getNumberOfRows(),
                 BufferedImage.TYPE_INT_ARGB);
         Graphics2D targetGraphic = imgAGRB.createGraphics();
-        targetGraphic.drawImage(bufferedImage, 0, 0, null);
+        targetGraphic.drawRenderedImage(bufferedImage, new AffineTransform());
         return imgAGRB;
     }
 

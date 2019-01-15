@@ -19,6 +19,7 @@ import java.awt.image.DataBuffer;
 import java.io.IOException;
 import javax.imageio.stream.ImageInputStream;
 import org.codice.imaging.nitf.render.ImageMask;
+import org.jaitools.tiledimage.DiskMemImage;
 
 class NoDisplayImageRepresentationHandler implements ImageRepresentationHandler {
     @Override
@@ -27,8 +28,12 @@ class NoDisplayImageRepresentationHandler implements ImageRepresentationHandler 
     }
 
     @Override
-    public final BufferedImage createBufferedImage(final int width, final int height) {
-        return new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+    public final DiskMemImage createBufferedImage(final int width, final int height) {
+        BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_GRAY);
+    return new DiskMemImage(
+        width,
+        height,
+        img.getSampleModel(), img.getColorModel());
     }
 
     @Override
